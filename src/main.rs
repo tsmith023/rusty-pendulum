@@ -181,11 +181,11 @@ pub fn run(
     m2: f64,
     step: f64,
 ) {
-    let mut rk4 = DoublePendulum::new(alpha, beta, alpha_dot, beta_dot, l1, l2, m1, m2, step);
+    let mut double_pendulum = DoublePendulum::new(alpha, beta, alpha_dot, beta_dot, l1, l2, m1, m2, step);
     let mut count = 0;
     loop {
-        println!("{} {} {} {} {}", count as f64 * step, rk4.alpha, rk4.beta, rk4.alpha_dot, rk4.beta_dot);
-        rk4.step();
+        println!("{} {} {} {} {}", count as f64 * step, double_pendulum.alpha, double_pendulum.beta, double_pendulum.alpha_dot, double_pendulum.beta_dot);
+        double_pendulum.step();
         count += 1;
     }
 }
