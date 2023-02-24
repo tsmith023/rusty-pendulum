@@ -1,7 +1,5 @@
 # rusty-pendulum
 
-## Overview
-
 This is a simple pendulum simulation written in Rust making use of the Runga-Kutta 4th order method
 to solve the first-order differential equation efficiently.
 
