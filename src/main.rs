@@ -3,65 +3,112 @@ use wasm_bindgen::prelude::*;
 
 const PI: f64 = std::f64::consts::PI;
 const G: f64 = 9.81;
-const L1: f64 = 1.0;
-const L2: f64 = 1.0;
-const M1: f64 = 1.0;
-const M2: f64 = 1.0;
-const STEP: f64 = 0.01;
 
+#[wasm_bindgen]
 #[derive(Clone, Copy)]
-struct RK4 {
+pub struct DoublePendulum {
     alpha: f64,
     beta: f64,
     alpha_dot: f64,
     beta_dot: f64,
+    lengths: (f64, f64),
+    masses: (f64, f64),
+    step: f64,
 }
 
-impl RK4 {
-    fn new(alpha: f64, beta: f64, alpha_dot: f64, beta_dot: f64) -> Self {
+#[wasm_bindgen]
+impl DoublePendulum {
+    pub fn new(
+        alpha: f64,
+        beta: f64,
+        alpha_dot: f64,
+        beta_dot: f64,
+        l1: f64,
+        l2: f64,
+        m1: f64,
+        m2: f64,
+        step: f64,
+    ) -> Self {
+        if alpha > PI || alpha < -PI {
+            panic!("alpha must be between -PI and PI");
+        }
+        if beta > PI || beta < -PI {
+            panic!("beta must be between -PI and PI");
+        }
+        if l1 <= 0.0 {
+            panic!("l1 must be greater than 0");
+        }
+        if l2 <= 0.0 {
+            panic!("l2 must be greater than 0");
+        }
+        if m1 <= 0.0 {
+            panic!("m1 must be greater than 0");
+        }
+        if m2 <= 0.0 {
+            panic!("m2 must be greater than 0");
+        }
+        if step <= 0.0 {
+            panic!("step must be greater than 0");
+        }
         Self {
             alpha,
             beta,
             alpha_dot,
             beta_dot,
+            lengths: (l1, l2),
+            masses: (m1, m2),
+            step,
         }
     }
 
     fn alpha_ddot(&self) -> f64 {
-        let a = M2 * G * L1 * self.beta.sin() * (self.alpha - self.beta).cos();
-        let b = - M2 * L1.powi(2) * self.alpha_dot.powi(2) * (self.alpha - self.beta).sin() * (self.alpha - self.beta).cos();
-        let c = - (M1 + M2) * G * L1 * self.alpha.sin();
-        let d = - M2 * L1 * L2 * self.beta_dot.powi(2) * (self.alpha - self.beta).sin();
-        let e = (M1 + M2) * L1.powi(2);
-        let f = - M2 * L1.powi(2) * (self.alpha - self.beta).cos().powi(2);
+        let (l1, l2) = self.lengths;
+        let (m1, m2) = self.masses;
+        let a = m2 * G * l1 * self.beta.sin() * (self.alpha - self.beta).cos();
+        let b = - m2 * l1.powi(2) * self.alpha_dot.powi(2) * (self.alpha - self.beta).sin() * (self.alpha - self.beta).cos();
+        let c = - (m1 + m2) * G * l1 * self.alpha.sin();
+        let d = - m2 * l1 * l2 * self.beta_dot.powi(2) * (self.alpha - self.beta).sin();
+        let e = (m1 + m2) * l1.powi(2);
+        let f = - m2 * l1.powi(2) * (self.alpha - self.beta).cos().powi(2);
         return (a + b + c + d) / (e + f)
     }
 
 
     fn beta_ddot(&self) -> f64 {
-        let a = L1 * self.alpha_dot.powi(2) * (self.alpha - self.beta).sin();
-        let b = - L1 * self.alpha_ddot() * (self.alpha - self.beta).cos();
+        let (l1, l2) = self.lengths;
+        let a = l1 * self.alpha_dot.powi(2) * (self.alpha - self.beta).sin();
+        let b = - l1 * self.alpha_ddot() * (self.alpha - self.beta).cos();
         let c = - G * self.alpha.sin();
-        return (a + b + c) / L2
+        return (a + b + c) / l2
     }
+}
+
+trait RK4 {
+    fn xi_dot(&self) -> Self;
+    fn step(&mut self);
+}
 
 
+impl RK4 for DoublePendulum {
     fn xi_dot(&self) -> Self {
         return Self {
             alpha: self.alpha_dot,
             beta: self.beta_dot,
             alpha_dot: self.alpha_ddot(),
             beta_dot: self.beta_ddot(),
+            lengths: self.lengths,
+            masses: self.masses,
+            step: self.step,
         }
     }
 
 
     fn step(&mut self) {
         let k1 = self.xi_dot();
-        let k2 = (*self + k1 * STEP / 2.0).xi_dot();
-        let k3 = (*self + k2 * STEP / 2.0).xi_dot();
-        let k4 = (*self + k3 * STEP).xi_dot();
-        let k = (k1 + (k2 * 2.0) + (k3 * 2.0) + k4) * STEP / 6.0;
+        let k2 = (*self + k1 * self.step / 2.0).xi_dot();
+        let k3 = (*self + k2 * self.step / 2.0).xi_dot();
+        let k4 = (*self + k3 * self.step).xi_dot();
+        let k = (k1 + (k2 * 2.0) + (k3 * 2.0) + k4) * self.step / 6.0;
         
         self.alpha = self.alpha + k.alpha;
         self.beta = self.beta + k.beta;
@@ -70,60 +117,80 @@ impl RK4 {
     }
 }
 
-impl Add<RK4> for RK4 {
-    type Output = RK4;
-    fn add(self, rhs: RK4) -> Self::Output {
-        RK4 {
+impl Add<DoublePendulum> for DoublePendulum {
+    type Output = DoublePendulum;
+    fn add(self, rhs: DoublePendulum) -> Self::Output {
+        DoublePendulum {
             alpha: self.alpha + rhs.alpha,
             beta: self.beta + rhs.beta,
             alpha_dot: self.alpha_dot + rhs.alpha_dot,
             beta_dot: self.beta_dot + rhs.beta_dot,
+            lengths: self.lengths,
+            masses: self.masses,
+            step: self.step,
         }
     }
 }
 
-impl<T> Mul<T> for RK4
+impl<T> Mul<T> for DoublePendulum
 where
     f64: From<T>,
     T: Copy, 
 {
-    type Output = RK4;
+    type Output = DoublePendulum;
     fn mul(self, rhs: T) -> Self::Output {
-        RK4 {
+        DoublePendulum {
             alpha: self.alpha * f64::from(rhs),
             beta: self.beta * f64::from(rhs),
             alpha_dot: self.alpha_dot * f64::from(rhs),
             beta_dot: self.beta_dot * f64::from(rhs),
+            lengths: self.lengths,
+            masses: self.masses,
+            step: self.step,
         }
     }
 }
 
-impl<T> Div<T> for RK4
+impl<T> Div<T> for DoublePendulum
 where
     f64: From<T>,
     T: Copy, 
 {
-    type Output = RK4;
+    type Output = DoublePendulum;
     fn div(self, rhs: T) -> Self::Output {
-        RK4 {
+        DoublePendulum {
             alpha: self.alpha / f64::from(rhs),
             beta: self.beta / f64::from(rhs),
             alpha_dot: self.alpha_dot / f64::from(rhs),
             beta_dot: self.beta_dot / f64::from(rhs),
+            lengths: self.lengths,
+            masses: self.masses,
+            step: self.step,
         }
     }
 }
 
-#[wasm_bindgen]
-pub fn run(alpha: f64, beta: f64, alpha_dot: f64, beta_dot: f64) {
-    let mut rk4 = RK4::new(alpha, beta, alpha_dot, beta_dot);
-    for i in 0..10000 {
-        println!("{} {} {} {} {}", i as f64 * STEP, rk4.alpha, rk4.beta, rk4.alpha_dot, rk4.beta_dot);
+pub fn run(
+    alpha: f64,
+    beta: f64,
+    alpha_dot: f64,
+    beta_dot: f64,
+    l1: f64,
+    l2: f64,
+    m1: f64,
+    m2: f64,
+    step: f64,
+) {
+    let mut rk4 = DoublePendulum::new(alpha, beta, alpha_dot, beta_dot, l1, l2, m1, m2, step);
+    let mut count = 0;
+    loop {
+        println!("{} {} {} {} {}", count as f64 * step, rk4.alpha, rk4.beta, rk4.alpha_dot, rk4.beta_dot);
         rk4.step();
+        count += 1;
     }
 }
 
 
 fn main() {
-    run(PI / 2.0, PI / 2.0, 0.0, 0.0);
+    run(PI / 2.0, PI / 2.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.001);
 }
