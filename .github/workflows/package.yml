@@ -17,7 +17,7 @@ jobs:
           version: 'latest'
 
       - name: Build
-        run: wasm-pack build --target web --out-name wasm --release
+        run: wasm-pack build --target web --out-name rusty-pendulum --release
 
       - name: Package
         run: wasm-pack pack pkg
