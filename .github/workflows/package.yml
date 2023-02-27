@@ -1,0 +1,28 @@
+name: Package WASM Module
+on:
+  push:
+    branches: [main]
+jobs:
+  build-pack-publish:
+    name: Build, Package, & Publish WASM Module
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up WASM-Pack
+        uses: jetli/wasm-pack-action@v0.4.0
+        with:
+          # Optional version of wasm-pack to install(eg. 'v0.9.1', 'latest')
+          version: 'latest'
+
+      - name: Build
+        run: wasm-pack build --target web --out-name wasm --release
+
+      - name: Package
+        run: wasm-pack pack pkg
+
+      - name: Publish
+        run: wasm-pack publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
