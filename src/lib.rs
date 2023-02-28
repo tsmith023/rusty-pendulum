@@ -81,15 +81,8 @@ impl DoublePendulum {
         let c = - G * self.alpha.sin();
         return (a + b + c) / l2
     }
-}
-
-trait RK4 {
-    fn xi_dot(&self) -> Self;
-    fn step(&mut self);
-}
 
 
-impl RK4 for DoublePendulum {
     fn xi_dot(&self) -> Self {
         return Self {
             alpha: self.alpha_dot,
@@ -102,8 +95,7 @@ impl RK4 for DoublePendulum {
         }
     }
 
-
-    fn step(&mut self) {
+    pub fn step(&mut self) {
         let k1 = self.xi_dot();
         let k2 = (*self + k1 * self.step / 2.0).xi_dot();
         let k3 = (*self + k2 * self.step / 2.0).xi_dot();
@@ -116,6 +108,41 @@ impl RK4 for DoublePendulum {
         self.beta_dot = self.beta_dot + k.beta_dot;
     }
 }
+
+// WASM BINDGEN HAS NOT IMPLEMENTED TRAITS YET
+
+// pub trait RK4 {
+//     fn xi_dot(&self) -> Self;
+//     fn step(&mut self);
+// }
+
+
+// impl RK4 for DoublePendulum {
+//     fn xi_dot(&self) -> Self {
+//         return Self {
+//             alpha: self.alpha_dot,
+//             beta: self.beta_dot,
+//             alpha_dot: self.alpha_ddot(),
+//             beta_dot: self.beta_ddot(),
+//             lengths: self.lengths,
+//             masses: self.masses,
+//             step: self.step,
+//         }
+//     }
+
+//     fn step(&mut self) {
+//         let k1 = self.xi_dot();
+//         let k2 = (*self + k1 * self.step / 2.0).xi_dot();
+//         let k3 = (*self + k2 * self.step / 2.0).xi_dot();
+//         let k4 = (*self + k3 * self.step).xi_dot();
+//         let k = (k1 + (k2 * 2.0) + (k3 * 2.0) + k4) * self.step / 6.0;
+        
+//         self.alpha = self.alpha + k.alpha;
+//         self.beta = self.beta + k.beta;
+//         self.alpha_dot = self.alpha_dot + k.alpha_dot;
+//         self.beta_dot = self.beta_dot + k.beta_dot;
+//     }
+// }
 
 impl Add<DoublePendulum> for DoublePendulum {
     type Output = DoublePendulum;
