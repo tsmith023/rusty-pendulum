@@ -107,6 +107,26 @@ impl DoublePendulum {
         self.alpha_dot = self.alpha_dot + k.alpha_dot;
         self.beta_dot = self.beta_dot + k.beta_dot;
     }
+
+    pub fn x1(&self) -> f64 {
+        let (l1, _) = self.lengths;
+        l1 * self.alpha.sin()
+    }
+
+    pub fn y1(&self) -> f64 {
+        let (l1, _) = self.lengths;
+        l1 * self.alpha.cos()
+    }
+
+    pub fn x2(&self) -> f64 {
+        let (l1, l2) = self.lengths;
+        l1 * self.alpha.sin() + l2 * self.beta.sin()
+    }
+
+    pub fn y2(&self) -> f64 {
+        let (l1, l2) = self.lengths;
+        l1 * self.alpha.cos() + l2 * self.beta.cos()
+    }
 }
 
 // WASM BINDGEN HAS NOT IMPLEMENTED TRAITS YET
