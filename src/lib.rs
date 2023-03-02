@@ -78,7 +78,7 @@ impl DoublePendulum {
         let (l1, l2) = self.lengths;
         let a = l1 * self.alpha_dot.powi(2) * (self.alpha - self.beta).sin();
         let b = - l1 * self.alpha_ddot() * (self.alpha - self.beta).cos();
-        let c = - G * self.alpha.sin();
+        let c = - G * self.beta.sin();
         return (a + b + c) / l2
     }
 
