@@ -115,7 +115,7 @@ impl DoublePendulum {
 
     pub fn y1(&self) -> f64 {
         let (l1, _) = self.lengths;
-        l1 * self.alpha.cos()
+        - l1 * self.alpha.cos()
     }
 
     pub fn x2(&self) -> f64 {
@@ -125,7 +125,7 @@ impl DoublePendulum {
 
     pub fn y2(&self) -> f64 {
         let (l1, l2) = self.lengths;
-        l1 * self.alpha.cos() + l2 * self.beta.cos()
+        - l1 * self.alpha.cos() - l2 * self.beta.cos()
     }
 }
 
